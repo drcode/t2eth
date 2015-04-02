@@ -1,2 +1,4 @@
 # t2eth
-Twitter->Ethereum Name Regsitration Importer
+
+Development in progress, currently broken.
+
