@@ -7,6 +7,8 @@
   :source-paths ["src/clj"]
 :repl-options {:timeout 200000} ;; Defaults to 30000 (30 seconds)
 
+:jvm-opts ["-Xmx125m"]
+
   :test-paths ["spec/clj"]
 
   :dependencies [[org.clojure/clojure "1.6.0"]
@@ -20,7 +22,10 @@
                  [om "0.8.0-rc1"]
                  [prismatic/om-tools "0.3.11"]
                  [cljs-ajax "0.3.10"]
-                 [environ "1.0.0"]]
+                 [org.clojure/data.json "0.2.6"]
+                 [clojure-twitter "1.2.8"]                            
+                 [environ "1.0.0"]
+                 [clj-http "1.1.0"]]
 
   :plugins [[lein-cljsbuild "1.0.3"]
             [lein-environ "1.0.0"]]

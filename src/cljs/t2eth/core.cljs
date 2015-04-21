@@ -1,9 +1,49 @@
 (ns t2eth.core
+    (:require-macros [cljs.core.async.macros :refer [go]])                                                           
     (:require [om.core :as om :include-macros true]
               [om-tools.dom :as dom :include-macros true]
-              [ajax.core :refer [GET]]))
+              [cljs.core.async :refer [<! >! chan close!]] 
+              [ajax.core :refer [GET POST]]
+              [t2eth.utils :refer [dbg]]))
 
-(defonce app-state (atom {:text "Hello Chestnut!"}))
+(enable-console-print!)
+
+(defn query-params []
+      (when-let [[_ oauth-token oauth-verifier] (re-find #"\\?oauth_token=(.+)&oauth_verifier=(.+)" (.-search js/location))]
+                {:oauth-token oauth-token
+                 :oauth-verifier oauth-verifier}))
+
+(defonce app-state (atom {:oauth (query-params)}))
+
+(defn async-get
+      ([uri params]
+          (let [c (chan)]
+               (GET uri
+                    {:handler (fn [response]
+                                  (go (>! c response)))
+                     :format :url
+                     :params  params})
+               c))
+      ([uri]
+         (async-get uri {})))
+
+
+(defn async-post [uri params]
+      (let [c (chan)]
+           (POST uri
+                {:handler (fn [response]
+                              (go (>! c response)))
+                 :format :url
+                 :keywords? true
+                 :params  params})
+           c))
+
+(defn timeout [ms]
+      (let [c (chan)]
+           (js/setTimeout (fn []
+                              (close! c))
+                          ms)
+           c))
 
 (defn main []
   (om/root
@@ -26,3 +66,11 @@
                    ))))
     app-state
     {:target (. js/document (getElementById "app"))}))
+
+(go (if-let [{:keys [oauth-token oauth-verifier]} (dbg "ttt" (query-params))]
+            (do (<! (async-post "verify" {:oauth-token oauth-token :oauth-verifier oauth-verifier}))
+                (swap! app-state assoc :status "waiting to aquire twitter name...")
+                #_(while (not (:twitter-userid (<! (async-get "status" {:oauth-token oauth-token}))))
+                       (<! (timeout 5000)))
+                #_(print "got twitter handle!"))
+            ))
