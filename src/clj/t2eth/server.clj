@@ -17,14 +17,14 @@
             [clojure.data.json :as js]
             [clj-http.client :as cl]))
 
-(def contract-address "ad96e1c4abd7b668413d617cf5e1b4e867264944")
+(def contract-address "677d75a9f47d354f169ce5b70cc8e140dc5a955e")
 
-(def primary-address "9cbc42e64ece50c0d6136402ea6e04d84e1e0d7b")
+(def primary-address "12f7c4c8977a5b9addb52b83e23c9d0f3b89be15")
 
 (def data-format "f7a6604f 626f62736d697468000000000000000000000000000000000000000000000000 00000000000000000000000000000000000000000000000000000000012d591") 
 
 (def configs (edn/read-string (slurp "config.edn")))
-
+n
 (def consumer (oauth/make-consumer (:consumer-key configs)
                                    (:consumer-secret configs)
                                    "https://api.twitter.com/oauth/request_token"
@@ -46,14 +46,13 @@
                                                                            :method  method
                                                                            :params  params
                                                                            :id      1})}))
-                           :key-fn keyword)))
+                            :key-fn keyword)))
 
 (defn balance [address]
       (geth-call "eth_getBalance" address "latest"))
 
-(defn send-transaction [& {:keys [from-address to-address value data] :or {from-address primary-address value "0" data null}}]
-      (get-call "eth_sendTransaction"
-                address
+(defn send-transaction [& {:keys [from-address to-address value data] :or {from-address primary-address value "0" data nil}}]
+      (geth-call "eth_sendTransaction"
                 {:from     from-address
                  :to       to-address
                  :gas      "30400"
@@ -75,7 +74,6 @@
 (defroutes routes
            (resources "/")
            (resources "/react" {:root "react"})
-           (GET "/derp" req "deerrppyderp")
            (GET "/approvaluri"
                 req
                 (oauth/user-approval-uri consumer
@@ -90,8 +88,8 @@
            (GET "/balance" []
                 (pr-str (balance primary-address)))
            (GET "/assign" [oauth-token address]
-                (format-assign-data "bobsmith" "123454364ece50c0d6136402ea6e04d84e1e0d7b")
-                #_(go (>! task-channel [:assign oauth-token address])))
+                #_(format-assign-data "bobsmith" "123454364ece50c0d6136402ea6e04d84e1e0d7b")
+                (go (>! task-channel [:assign oauth-token address])))
            (GET "/*" [] (page)))
 
 (def http-handler
@@ -128,7 +126,7 @@
                                                  (let [access-token-response (oauth/access-token consumer request-token oauth-verify)]
                                                       (assoc-in db [oauth-token :screen-name] (:screen-name access-token-response)))))
                                 :assign (let [[oauth-token address] args
-                                              {:keys [screen-name] (db oauth-token)}]
+                                              {:keys [screen-name]} (db oauth-token)]
                                              (if screen-name
                                                  (do (send-transaction (format-assign-data screen-name address) contract-address)
                                                      (assoc-in db [oauth-token :address] address))

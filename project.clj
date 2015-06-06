@@ -25,7 +25,8 @@
                  [org.clojure/data.json "0.2.6"]
                  [clojure-twitter "1.2.8"]                            
                  [environ "1.0.0"]
-                 [clj-http "1.1.0"]]
+                 [clj-http "1.1.0"]
+                 [me.raynes/conch "0.8.0"]]
 
   :plugins [[lein-cljsbuild "1.0.3"]
             [lein-environ "1.0.0"]]
